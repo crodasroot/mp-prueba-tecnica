@@ -82,7 +82,19 @@ const agregarIndicio = () => {
 
  
   nuevo.value.indicios.push({ ...nuevoIndicio.value, tecnico_id: tecnicoSeleccionado });
-  nuevoIndicio.value = { nombre: '', descripcion: '', color: '', tamano: '', peso: '', ubicacion: '', tecnico_id: '' };
+  nuevoIndicio.value = { 
+    nombre: '', 
+    descripcion: '', 
+    tipo: 'otro', 
+    color: '', 
+    tamano: '', 
+    peso: '', 
+    ubicacion: '', 
+    ubicacion_almacen: '', 
+    estado_conservacion: '',
+    observaciones: '',
+    tecnico_id: '' 
+  };
 };
 
 const quitarIndicio = (index) => {
@@ -150,6 +162,10 @@ const guardar = async () => {
       indicios: []
     };
     
+    // Generar un nuevo número para el siguiente registro
+    generarNumero(); 
+    
+    // Recargar la lista de expedientes
     await cargarExpedientes();
   } catch (err) {
     console.error('Error al guardar expediente con indicios:', err);
@@ -211,212 +227,267 @@ const enviarRevision = async (id) => {
   }
 };
 
+const generarNumero = () => {
+  const rnd = Math.floor(Math.random() * 1e6).toString().padStart(6, "0");
+  nuevo.value.numero_expediente = `DICRI${rnd}`;
+};
+
 onMounted(() => {
   cargarExpedientes();
   cargarTecnicos();
   generarNumero();
 });
 
-const generarNumero = () => {
-  const rnd = Math.floor(Math.random() * 1e6).toString().padStart(6, "0");
-  nuevo.value.numero_expediente = `DICRI${rnd}`;
-};
+
 </script>
 
 <template>
   <div class="container py-4">
-   
-    <h2 class="fw-bold mb-3"> Expedientes DICRI</h2>
-         
-    <!-- FORMULARIO -->
-    <div class="card mb-4">
-      <div class="card-body">
+    <header class="d-flex justify-content-between align-items-center mb-4 border-bottom pb-2">
+      <h2 class="fw-bold text-primary">📂 Gestión de Expedientes DICRI</h2>
+      <button class="btn btn-primary" data-bs-toggle="collapse" data-bs-target="#registroForm">
+        ➕ Nuevo Expediente
+      </button>
+    </header>
 
-        <h5 class="mb-4">Registrar nuevo expediente</h5>
+    <div class="collapse mb-4" id="registroForm">
+      <div class="card shadow-sm border-0">
+        <div class="card-body p-4">
+          <h5 class="card-title mb-4 border-bottom pb-2">Datos del Nuevo Expediente</h5>
 
-  <div class="row g-3">
-          <div class="col-md-4">
-            <div class="input-group">
-              <input
-                v-model="nuevo.numero_expediente"
-                class="form-control"
-                placeholder="Número de expediente"
-                disabled
-              />
-             
-            </div>
-          </div>
-
-          <div class="col-md-4">
-            <select v-model="nuevo.tecnico_id" class="form-select">
-              <option value="">Seleccione técnico</option>
-              <option v-for="t in tecnicos" :key="t.id" :value="t.id">
-                {{ t.name }}
-              </option>
-            </select>
-          </div>
-
-          <div class="col-md-4">
-            <input type="date" v-model="nuevo.fecha_hecho" class="form-control" />
-          </div>
-
-          <div class="col-md-4">
-            <input v-model="nuevo.titulo" class="form-control" placeholder="Título" />
-          </div>
-
-          <div class="col-md-4">
-            <input v-model="nuevo.ubicacion_hecho" class="form-control" placeholder="Ubicación del hecho" />
-          </div>
-
-          <div class="col-md-12">
-            <textarea v-model="nuevo.descripcion" class="form-control" placeholder="Descripción del hecho"></textarea>
-          </div>
-
-          <!-- Añadir indicios antes de guardar -->
-          <div class="col-12 mt-3">
-            <div class="card p-3">
-              <h6 class="mb-3">Agregar indicio (antes de guardar expediente)</h6>
-
-              <div class="row g-2 align-items-end">
-                <div class="col-md-4">
-                  <input v-model="nuevoIndicio.nombre" class="form-control" placeholder="Nombre del indicio" />
-                </div>
-                <div class="col-md-4">
-                  <input v-model="nuevoIndicio.descripcion" class="form-control" placeholder="Descripción del indicio" />
-                </div>
-                <div class="col-md-2">
-                  <select v-model="nuevoIndicio.tipo" class="form-select">
-                    <option value="arma">Arma</option>
-                    <option value="documento">Documento</option>
-                    <option value="electronico">Electrónico</option>
-                    <option value="vestimenta">Vestimenta</option>
-                    <option value="otro">Otro</option>
-                  </select>
-                </div>
-                <div class="col-md-2">
-                  <input v-model="nuevoIndicio.color" class="form-control" placeholder="Color" />
-                </div>
-                <div class="col-md-2">
-                  <input v-model="nuevoIndicio.tamano" class="form-control" placeholder="Tamaño" />
-                </div>
-                <div class="col-md-2">
-                  <input v-model="nuevoIndicio.peso" class="form-control" placeholder="Peso" />
-                </div>
-                <div class="col-md-2">
-                  <select v-model="nuevoIndicio.tecnico_id" class="form-select">
-                    <option value="">Técnico</option>
-                    <option v-for="t in tecnicos" :key="t.id" :value="t.id">{{ t.name }}</option>
-                  </select>
-                </div>
-
-                <div class="col-12 mt-2 d-flex gap-2">
-                  <input v-model="nuevoIndicio.ubicacion" class="form-control" placeholder="Ubicación del indicio (sitio del hallazgo)" />
-                  <input v-model="nuevoIndicio.ubicacion_almacen" class="form-control" placeholder="Ubicación en almacén" />
-                  <input v-model="nuevoIndicio.estado_conservacion" class="form-control" placeholder="Estado de conservación" />
-                  <button class="btn btn-sm btn-outline-primary" type="button" @click="agregarIndicio">Agregar indicio</button>
+          <form @submit.prevent="guardar">
+            <div class="row g-3">
+              <div class="col-md-4">
+                <label class="form-label small fw-semibold">Número de Expediente</label>
+                <div class="input-group">
+                  <span class="input-group-text bg-light">#</span>
+                  <input v-model="nuevo.numero_expediente" class="form-control fw-bold bg-light" disabled />
                 </div>
               </div>
 
-              <div class="mt-3">
-                <small class="text-muted">Indicios agregados para este expediente:</small>
-                <ul class="list-group mt-2">
-                  <li class="list-group-item d-flex justify-content-between align-items-start" v-for="(i, idx) in nuevo.indicios" :key="idx">
-                    <div>
-                      <strong>{{ i.nombre || i.descripcion }}</strong>
-                      <div class="text-muted small">{{ i.tipo }} · {{ i.color }} · {{ i.tamano }} · {{ i.ubicacion }}</div>
-                      <div class="text-muted small">Almacén: {{ i.ubicacion_almacen }} · Estado: {{ i.estado_conservacion }}</div>
-                    </div>
-                    <div>
-                      <button class="btn btn-sm btn-danger" @click="quitarIndicio(idx)">Eliminar</button>
-                    </div>
-                  </li>
-                  <li v-if="!nuevo.indicios.length" class="list-group-item text-muted">No hay indicios añadidos.</li>
-                </ul>
+              <div class="col-md-4">
+                <label class="form-label small fw-semibold">Técnico Asignado</label>
+                <select v-model="nuevo.tecnico_id" class="form-select" required>
+                  <option value="" disabled>Seleccione técnico...</option>
+                  <option v-for="t in tecnicos" :key="t.id" :value="t.id">
+                    {{ t.name }}
+                  </option>
+                </select>
+                <small v-if="tecnicosLoading" class="text-muted">Cargando técnicos...</small>
+              </div>
+
+              <div class="col-md-4">
+                <label class="form-label small fw-semibold">Fecha del Hecho</label>
+                <input type="date" v-model="nuevo.fecha_hecho" class="form-control" required />
+              </div>
+
+              <div class="col-md-6">
+                <label class="form-label small fw-semibold">Título / Resumen Corto</label>
+                <input v-model="nuevo.titulo" class="form-control" placeholder="Ej: Robo a mano armada, Accidente de tráfico..." />
+              </div>
+
+              <div class="col-md-6">
+                <label class="form-label small fw-semibold">Ubicación del Hecho</label>
+                <input v-model="nuevo.ubicacion_hecho" class="form-control" placeholder="Dirección o descripción del lugar" />
+              </div>
+
+              <div class="col-md-12">
+                <label class="form-label small fw-semibold">Descripción Detallada del Hecho</label>
+                <textarea v-model="nuevo.descripcion" class="form-control" rows="3" placeholder="Detalles del suceso..."></textarea>
               </div>
             </div>
-          </div>
+
+            <div class="accordion mt-4" id="accordionIndicios">
+              <div class="accordion-item">
+                <h2 class="accordion-header" id="headingOne">
+                  <button class="accordion-button collapsed bg-light" type="button" data-bs-toggle="collapse" data-bs-target="#collapseOne" aria-expanded="false" aria-controls="collapseOne">
+                    🔬 Indicios Asociados ({{ nuevo.indicios.length }})
+                  </button>
+                </h2>
+                <div id="collapseOne" class="accordion-collapse collapse" aria-labelledby="headingOne" data-bs-parent="#accordionIndicios">
+                  <div class="accordion-body">
+                    <h6 class="mb-3 text-secondary">Añadir Nuevo Indicio</h6>
+
+                    <div class="row g-2 mb-3 align-items-end border-bottom pb-3">
+                      <div class="col-md-3">
+                        <label class="form-label small">Nombre*</label>
+                        <input v-model="nuevoIndicio.nombre" class="form-control form-control-sm" placeholder="Nombre (ej: Casquillo, Teléfono)" />
+                      </div>
+                      <div class="col-md-3">
+                        <label class="form-label small">Descripción</label>
+                        <input v-model="nuevoIndicio.descripcion" class="form-control form-control-sm" placeholder="Descripción breve" />
+                      </div>
+                      <div class="col-md-2">
+                        <label class="form-label small">Tipo</label>
+                        <select v-model="nuevoIndicio.tipo" class="form-select form-select-sm">
+                          <option value="arma">Arma</option>
+                          <option value="documento">Documento</option>
+                          <option value="electronico">Electrónico</option>
+                          <option value="vestimenta">Vestimenta</option>
+                          <option value="otro">Otro</option>
+                        </select>
+                      </div>
+                      <div class="col-md-2">
+                        <label class="form-label small">Técnico</label>
+                        <select v-model="nuevoIndicio.tecnico_id" class="form-select form-select-sm">
+                          <option value="">(Técnico Exp.)</option>
+                          <option v-for="t in tecnicos" :key="t.id" :value="t.id">{{ t.name }}</option>
+                        </select>
+                      </div>
+                      <div class="col-md-2">
+                        <button class="btn btn-sm btn-outline-success w-100" type="button" @click="agregarIndicio">
+                          + Añadir
+                        </button>
+                      </div>
+
+                      <div class="col-md-2">
+                        <label class="form-label small">Color</label>
+                        <input v-model="nuevoIndicio.color" class="form-control form-control-sm" placeholder="Color" />
+                      </div>
+                      <div class="col-md-2">
+                        <label class="form-label small">Tamaño</label>
+                        <input v-model="nuevoIndicio.tamano" class="form-control form-control-sm" placeholder="Tamaño" />
+                      </div>
+                      <div class="col-md-2">
+                        <label class="form-label small">Peso (Kg/g)</label>
+                        <input v-model="nuevoIndicio.peso" class="form-control form-control-sm" placeholder="Peso" />
+                      </div>
+                      <div class="col-md-3">
+                        <label class="form-label small">Ubicación (Sitio)</label>
+                        <input v-model="nuevoIndicio.ubicacion" class="form-control form-control-sm" placeholder="Lugar exacto del hallazgo" />
+                      </div>
+                      <div class="col-md-3">
+                        <label class="form-label small">Ubicación (Almacén)</label>
+                        <input v-model="nuevoIndicio.ubicacion_almacen" class="form-control form-control-sm" placeholder="Código de almacén/custodia" />
+                      </div>
+                      <div class="col-md-4">
+                        <label class="form-label small">Estado de Conservación</label>
+                        <input v-model="nuevoIndicio.estado_conservacion" class="form-control form-control-sm" placeholder="Estado (Bueno, Deteriorado, etc.)" />
+                      </div>
+                      <div class="col-md-8">
+                        <label class="form-label small">Observaciones</label>
+                        <input v-model="nuevoIndicio.observaciones" class="form-control form-control-sm" placeholder="Observaciones adicionales" />
+                      </div>
+                    </div>
+                    
+                    <h6 class="text-secondary mt-3">Indicios Pendientes de Guardar ({{ nuevo.indicios.length }})</h6>
+                    <ul class="list-group list-group-flush mt-2">
+                      <li class="list-group-item d-flex justify-content-between align-items-center bg-light" v-for="(i, idx) in nuevo.indicios" :key="idx">
+                        <div class="ms-2 me-auto">
+                          <div class="fw-bold text-primary">{{ i.nombre || i.descripcion }}</div>
+                          <span class="badge bg-secondary me-2">{{ i.tipo }}</span>
+                          <span class="small text-muted">{{ i.ubicacion }} | Almacén: {{ i.ubicacion_almacen }}</span>
+                          <span class="small text-muted d-block" v-if="i.color || i.tamano || i.peso">
+                            <small>Detalles: {{ i.color ? `${i.color} / ` : '' }}{{ i.tamano ? `${i.tamano} / ` : '' }}{{ i.peso ? `${i.peso} kg` : '' }}</small>
+                          </span>
+                        </div>
+                        <button class="btn btn-sm btn-outline-danger" type="button" @click="quitarIndicio(idx)">
+                          <span class="small">X Quitar</span>
+                        </button>
+                      </li>
+                      <li v-if="!nuevo.indicios.length" class="list-group-item text-muted text-center">
+                        Aún no hay indicios añadidos.
+                      </li>
+                    </ul>
+
+                  </div>
+                </div>
+              </div>
+            </div>
+            <button class="btn btn-primary btn-lg mt-4 w-100" type="submit" :disabled="guardando">
+              <span v-if="guardando" class="spinner-border spinner-border-sm me-2"></span>
+              {{ guardando ? "Guardando Expediente y Indicios..." : "💾 Guardar Expediente DICRI" }}
+            </button>
+          </form>
 
         </div>
-
-        <button class="btn btn-primary mt-3" @click="guardar" :disabled="guardando">
-          <span v-if="guardando" class="spinner-border spinner-border-sm me-2"></span>
-          {{ guardando ? "Guardando..." : "Guardar expediente" }}
-        </button>
-
       </div>
     </div>
+    <hr/>
 
-    <!-- TABLA -->
-    <div class="card">
+    <div class="card shadow-sm">
+      <div class="card-header bg-white fw-bold">
+        📋 Lista de Expedientes Registrados
+      </div>
       <div class="card-body p-0">
-          
-        <table class="table table-bordered table-hover mb-0">
-          <thead class="table-light">
-            <tr>
-              <th>Número</th>
-              <th>Técnico</th>
-              <th>Fecha</th>
-              <th>Estado</th>
-              <th>Acciones</th>
-              <th>Indicios</th>
-            </tr>
-          </thead>
+        <div class="table-responsive">
+          <table class="table table-striped table-hover mb-0 align-middle">
+            <thead class="table-dark">
+              <tr>
+                <th scope="col">Número</th>
+                <th scope="col">Título/Hecho</th>
+                <th scope="col">Técnico Asignado</th>
+                <th scope="col">Fecha</th>
+                <th scope="col" class="text-center">Estado</th>
+                <th scope="col" class="text-center">Acciones</th>
+                <th scope="col" class="text-center">Detalles</th>
+              </tr>
+            </thead>
 
-          <tbody>
-            <tr v-if="cargando">
-              <td colspan="6" class="text-center py-4">Cargando...</td>
-            </tr>
+            <tbody>
+              <tr v-if="cargando">
+                <td colspan="7" class="text-center py-4 text-muted">Cargando expedientes...</td>
+              </tr>
+              
+              <tr v-for="e in expedientes" :key="e.id">
+                <td class="fw-bold text-primary">{{ e.numero_expediente }}</td>
+                <td>
+                  <span class="fw-semibold">{{ e.titulo || 'Sin título' }}</span>
+                  <div class="small text-muted fst-italic">{{ e.ubicacion_hecho || 'Ubicación no registrada' }}</div>
+                </td>
+                <td>{{ e.tecnico_nombre || 'N/A'}}</td>
+                <td class="small">{{ new Date(e.fecha_hecho).toLocaleDateString() }}</td>
 
-            <tr v-for="e in expedientes" :key="e.id">
-              <td>{{ e.numero_expediente }}</td>
-              <td>{{ e.tecnico_nombre}}</td>
-              <td>{{ e.fecha_hecho }}</td>
+                <td class="text-center">
+                  <span class="badge"
+                    :class="{
+                      'bg-warning text-dark': e.estado === 'registro',
+                      'bg-info': e.estado === 'revision',
+                      'bg-success': e.estado === 'aprobado',
+                      'bg-danger': e.estado === 'rechazado'
+                    }">
+                    {{ e.estado.toUpperCase() }}
+                  </span>
+                </td>
 
-              <td>
-                <span class="badge"
-                  :class="{
-                    'bg-warning text-dark': e.estado === 'registro',
-                    'bg-info': e.estado === 'revision',
-                    'bg-success': e.estado === 'aprobado',
-                    'bg-danger': e.estado === 'rechazado'
-                  }">
-                  {{ e.estado }}
-                </span>
-              </td>
+                <td class="text-center">
+                  <div class="d-flex flex-column align-items-center gap-1">
+                    <button v-if="e.estado === 'registro' && (esCoordinador || (esTecnico && auth.user?.id == e.tecnico_id))" class="btn btn-sm btn-outline-primary w-100" @click="enviarRevision(e.id)" :disabled="actionLoading[e.id]">
+                      <span v-if="actionLoading[e.id]" class="spinner-border spinner-border-sm me-1"></span>
+                      📩 Revisión
+                    </button>
+                        
+                    <div v-if="esCoordinador && e.estado === 'revision'" class="btn-group w-100" role="group">
+                      <button class="btn btn-sm btn-success" @click="aprobarExpediente(e.id)" :disabled="actionLoading[e.id]">
+                        <span v-if="actionLoading[e.id]" class="spinner-border spinner-border-sm me-1"></span>
+                        ✔️ Aprobar
+                      </button>
+                      <button class="btn btn-sm btn-danger" @click="rechazarExpediente(e.id)" :disabled="actionLoading[e.id]">
+                        <span v-if="actionLoading[e.id]" class="spinner-border spinner-border-sm me-1"></span>
+                        ❌ Rechazar
+                      </button>
+                    </div>
+                  </div>
+                </td>
 
-              <td>
-                <!-- Enviar a revisión: visible si está en 'registro' y el usuario es coordinador o el técnico asignado -->
-                <button v-if="e.estado === 'registro' && (esCoordinador || (esTecnico && auth.user?.id == e.tecnico_id))" class="btn btn-sm btn-primary me-1" @click="enviarRevision(e.id)" :disabled="actionLoading[e.id]">
-                  <span v-if="actionLoading[e.id]" class="spinner-border spinner-border-sm me-1"></span>
-                  Enviar a revisión
-                </button>
-                    {{  }}
-                <div v-if="esCoordinador">
-                  <button v-if="e.estado === 'revision'" class="btn btn-sm btn-success me-1" @click="aprobarExpediente(e.id)" :disabled="actionLoading[e.id]">
-                    <span v-if="actionLoading[e.id]" class="spinner-border spinner-border-sm me-1"></span>
-                    Aprobar
-                  </button>
-
-                  <button v-if="e.estado === 'revision'" class="btn btn-sm btn-danger me-1" @click="rechazarExpediente(e.id)" :disabled="actionLoading[e.id]">
-                    Rechazar
-                  </button>
-                </div>
-              </td>
-
-              <td>
-                <button 
-                  class="btn btn-outline-primary btn-sm"
+                <td class="text-center">
+                  <button 
+                    class="btn btn-outline-secondary btn-sm"
                     @click="router.push(`/dashboard/expediente/${e.id}/indicios`)"
-                >
-                  Ver indicios →
-                </button>
-              </td>
+                  >
+                    Ver Indicios 👁️
+                  </button>
+                </td>
+              </tr>
+              <tr v-if="!cargando && !expedientes.length">
+                <td colspan="7" class="text-center py-3 text-secondary">
+                  No se encontraron expedientes.
+                </td>
+              </tr>
+            </tbody>
 
-            </tr>
-          </tbody>
-
-        </table>
-
+          </table>
+        </div>
       </div>
     </div>
 
