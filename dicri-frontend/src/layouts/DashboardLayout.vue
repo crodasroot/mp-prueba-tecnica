@@ -26,7 +26,7 @@
   </div>
   <footer class="text-center p-4 " style="border-right: #1a2430">
     <p>Dicri - Prueba Técnica Sistema de Gestión de Evidencias</p>
-    <p>&copy; 2025   Carlos Rodas</p>
+    <p>&copy; 2025   Carlos Rodas  XXX</p>
   </footer>
 </template>
 
